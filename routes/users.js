@@ -1,17 +1,24 @@
 // Configuro el router y el schema correspondiente.
 const router = require('express').Router();
 const User = require('../models/user.js');
+// Traigo mi middleware que valida el token
+const tokenValidation = require('./tokenValidation');
+
+// Configuro JWT
+const jwt = require('jsonwebtoken');
 
 router
   .get('/state', async (req, res) => {
     return res.status(400).json({
       error: null,
-      message: 'Login service OK.',
+      message: 'Login service is UP',
     });
   })
   .post('/login', async (req, res) => {
     const { body } = req;
     console.log('POST /users/login');
+    console.log(body.name);
+    console.log(body.password);
 
     if (!body.name || !body.password) {
       return res.status(400).json({
@@ -24,13 +31,25 @@ router
       name: body.name,
     });
 
+    console.log(user);
+
     const passwordOk = body.password === user.password;
 
     if (user && passwordOk) {
-      return res.status(200).json({
+      const token = jwt.sign(
+        {
+          name: user.name,
+          role: user.role,
+          id: user._id,
+        },
+        process.env.TOKEN_SECRET
+      );
+
+      res.header('auth-token', token).status(200).json({
         error: null,
+        role: user.role,
         message: 'Credentials are OK',
-        role: user.role || 'user',
+        data: { token },
       });
     } else {
       return res.status(400).json({
@@ -80,13 +99,26 @@ router
       res.status(400).json({ error: true, message: error });
     }
   })
-  .put('/update/', async (req, res) => {
+  .put('/update', tokenValidation, async (req, res) => {
     const { body } = req;
-    console.log('PUT/users/update' + username);
+    const token = req.header('auth-token');
+    const decodedRole = jwt.decode(token, { complete: true });
+    console.log(decodedRole.payload);
+    console.log('PUT/users/update ' + body.name);
+
+    // Chequeo si el body no llega vacío para directamente devolver
+    if (!body.name || !body.password || !body.mail) {
+      return res.status(400).json({
+        error: true,
+        message: 'The message has EMPTY fields.',
+      });
+    }
+
     try {
+      // let decoded = jwtToken.decode(token, { complete: true });
       const modUser = await User.findOneAndUpdate(
         body.name,
-        { name: body.name, password: body.password, role: body.role },
+        { name: body.name, mail: body.mail, password: body.password, role: body.role },
         {
           useFindAndModify: false,
         }
@@ -101,9 +133,9 @@ router
       });
     }
   })
-  .delete('/delete/:username', async (req, res) => {
-    const { username } = req.params;
-    console.log('DELETE/users/' + username);
+  .delete('/delete', tokenValidation, async (req, res) => {
+    const { body } = req;
+    console.log('DELETE/users/' + body.name);
 
     // chequeo previamente si el user es el super usuario para no borrarlo nunca
     const SUPER_USER = process.env.SUPER_USER || 'admin';
@@ -117,7 +149,7 @@ router
 
     try {
       const delUser = await User.findOneAndDelete({
-        name: username,
+        name: body.name,
       });
       res.status(200).json(delUser);
       console.log('DEL user ' + delUser.name);
