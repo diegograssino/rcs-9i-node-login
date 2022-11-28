@@ -24,6 +24,10 @@ const userSchema = new Schema({
     min: 6,
     max: 12,
   },
+  role: {
+    type: String,
+    required: true,
+  },
   date: {
     type: Date,
     default: Date.now,

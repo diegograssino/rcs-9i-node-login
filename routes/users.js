@@ -2,6 +2,9 @@
 const router = require('express').Router();
 const User = require('../models/user.js');
 
+// Configuro bcrypt
+const bcrypt = require('bcryptjs');
+
 router
   .get('/state', async (req, res) => {
     return res.status(400).json({
@@ -13,6 +16,7 @@ router
     const { body } = req;
     console.log('POST /users/login');
 
+    // Al no tener validaciones, simplemente chequea que el body no venga vacío, y sí es así retorna un msj de error.
     if (!body.name || !body.password) {
       return res.status(400).json({
         error: true,
@@ -24,13 +28,20 @@ router
       name: body.name,
     });
 
-    const passwordOk = body.password === user.password;
+    if (!user) {
+      return res.status(400).json({
+        error: true,
+        message: 'The message has WRONG information.',
+      });
+    }
+
+    const passwordOk = await bcrypt.compare(body.password, user.password);
 
     if (user && passwordOk) {
       return res.status(200).json({
         error: null,
         message: 'Credentials are OK',
-        role: user.role || 'user',
+        role: user.role,
       });
     } else {
       return res.status(400).json({
@@ -50,15 +61,13 @@ router
       });
     }
 
+    // Chequeo doble de previa existencia del usuario, en la API y en el Schema con unique
     const newUserNameExist = await User.findOne({
       name: body.name,
     });
-
     const newUserMailExist = await User.findOne({
       mail: body.mail,
     });
-
-    // Chequeo doble de previa existencia del usuario, en la API y en el Schema con unique
     if (newUserNameExist || newUserMailExist) {
       return res.status(400).json({
         error: true,
@@ -66,13 +75,19 @@ router
       });
     }
 
+    // Aplico bcrypt
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(body.password, salt);
+
     try {
       const newUser = new User({
         name: body.name,
         mail: body.mail,
-        password: body.password,
+        password: hashedPassword,
+        role: body.role,
       });
       await newUser.save();
+      newUser.password = body.password;
       res.status(200).json(newUser);
       console.log('ADD user ' + newUser.name);
     } catch (error) {
@@ -82,7 +97,7 @@ router
   })
   .put('/update/', async (req, res) => {
     const { body } = req;
-    console.log('PUT/users/update' + username);
+    console.log('PUT/users/update' + body.name);
     try {
       const modUser = await User.findOneAndUpdate(
         body.name,
@@ -101,14 +116,14 @@ router
       });
     }
   })
-  .delete('/delete/:username', async (req, res) => {
-    const { username } = req.params;
-    console.log('DELETE/users/' + username);
+  .delete('/delete', async (req, res) => {
+    const { body } = req;
+    console.log('DELETE/users/' + body.name);
 
     // chequeo previamente si el user es el super usuario para no borrarlo nunca
     const SUPER_USER = process.env.SUPER_USER || 'admin';
 
-    if (username === SUPER_USER) {
+    if (body.name === SUPER_USER) {
       return res.status(400).json({
         error: true,
         message: 'This user cannot be erased!',
@@ -117,7 +132,7 @@ router
 
     try {
       const delUser = await User.findOneAndDelete({
-        name: username,
+        name: body.name,
       });
       res.status(200).json(delUser);
       console.log('DEL user ' + delUser.name);

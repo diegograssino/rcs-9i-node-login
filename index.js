@@ -3,7 +3,7 @@
 // b) Creo la carpeta localmente, ingreso a la misma, copio y pego los comandos que me da github. Ahora el proyecto ya tiene git y está asociado a nuestro repo.
 // c) Inicializo con npm para generar nuestra estructura para instalar dependencias: "npm init", creo el .gitignore, utilizar este ejemplo en caso de no saber que agregar: https://github.com/github/gitignore/blob/main/Node.gitignore
 // d) Le doy enter a todo y luego edito el package.json, agrego en scripts lo siguiente: "dev": "nodemon index.js",
-// e) Instalo dependencias normalmente necesarias: "npm install cors dotenv express mongoose jsonwebtoken" y "npm install -D nodemon"
+// e) Instalo dependencias normalmente necesarias: "npm install cors dotenv express mongoose jsonwebtoken bcryptjs" y "npm install -D nodemon"
 // f) DEPLOY --> Creo un archivo vercel.json, el mismo debe tener el siguiente contenido (reemplazar index.js si el archivo principal tiene otro nombre):
 // {
 //   "version": 2,
