@@ -1,6 +1,10 @@
 // Configuro el router y el schema correspondiente.
 const router = require('express').Router();
 const User = require('../models/user.js');
+// Traigo el middleware que chequea el JWT
+const tokenValidation = require('./tokenValidation');
+// Configuro JWT
+const jwt = require('jsonwebtoken');
 
 // Configuro bcrypt
 const bcrypt = require('bcryptjs');
@@ -38,10 +42,36 @@ router
     const passwordOk = await bcrypt.compare(body.password, user.password);
 
     if (user && passwordOk) {
-      return res.status(200).json({
+      // Creando token
+      const token = jwt.sign(
+        {
+          name: user.name,
+          role: user.role,
+          id: user._id,
+        },
+        process.env.TOKEN_SECRET
+      );
+
+      // Guardando el token en la bbdd
+      const userToAddToken = await User.findOneAndUpdate(
+        { name: body.name },
+        {
+          name: user.name,
+          password: user.password,
+          role: user.role,
+          mail: user.mail,
+          tokens: token,
+        },
+        {
+          useFindAndModify: false,
+        }
+      );
+
+      return res.header('auth-token', token).status(200).json({
         error: null,
         message: 'Credentials are OK',
         role: user.role,
+        data: { token },
       });
     } else {
       return res.status(400).json({
@@ -95,13 +125,27 @@ router
       res.status(400).json({ error: true, message: error });
     }
   })
-  .put('/update/', async (req, res) => {
+  .put('/update', tokenValidation, async (req, res) => {
     const { body } = req;
     console.log('PUT/users/update' + body.name);
+
+    const token = req.header('auth-token');
+    const decodedToken = jwt.decode(token, { complete: true });
+
+    // chequeo previamente si el user es el super usuario para no borrarlo nunca
+    const SUPER_USER = process.env.SUPER_USER || 'admin';
+
+    if (body.name === SUPER_USER || !decodedToken.payload.role === 'admin') {
+      return res.status(400).json({
+        error: true,
+        message: 'Acceso DENEGADO.',
+      });
+    }
+
     try {
       const modUser = await User.findOneAndUpdate(
         body.name,
-        { name: body.name, password: body.password, role: body.role },
+        { name: body.name, password: body.password, role: body.role, mail: body.mail },
         {
           useFindAndModify: false,
         }
@@ -116,17 +160,19 @@ router
       });
     }
   })
-  .delete('/delete', async (req, res) => {
+  .delete('/delete', tokenValidation, async (req, res) => {
     const { body } = req;
+    const token = req.header('auth-token');
+    const decodedToken = jwt.decode(token, { complete: true });
     console.log('DELETE/users/' + body.name);
 
     // chequeo previamente si el user es el super usuario para no borrarlo nunca
     const SUPER_USER = process.env.SUPER_USER || 'admin';
 
-    if (body.name === SUPER_USER) {
+    if (body.name === SUPER_USER || !decodedToken.payload.role === 'admin') {
       return res.status(400).json({
         error: true,
-        message: 'This user cannot be erased!',
+        message: 'Acceso DENEGADO.',
       });
     }
 

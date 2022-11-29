@@ -32,6 +32,10 @@ const userSchema = new Schema({
     type: Date,
     default: Date.now,
   },
+  tokens: {
+    type: String,
+    default: '',
+  },
 });
 
 const User = mongoose.model('users', userSchema);
