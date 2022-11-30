@@ -21,6 +21,7 @@ router
     const user = await User.findOne({
       name: body.name,
     });
+    console.log(user);
 
     if (!user) {
       return res.status(400).json({
