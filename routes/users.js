@@ -174,6 +174,14 @@ router
         message: error,
       });
     }
+  })
+  .get('*', (req, res, next) => {
+    timeStamp('GET on /users/*');
+    res.status(404).json({ error: true, message: 'Not Found!' });
+  })
+  .post('*', (req, res, next) => {
+    timeStamp('POST on /users/*');
+    res.status(404).json({ error: true, message: 'Not Found!' });
   });
 
 module.exports = router;
