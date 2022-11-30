@@ -5,17 +5,10 @@ const User = require('../models/user.js');
 const tokenValidation = require('./tokenValidation');
 // Configuro JWT
 const jwt = require('jsonwebtoken');
-
 // Configuro bcrypt
 const bcrypt = require('bcryptjs');
 
 router
-  .get('/state', async (req, res) => {
-    return res.status(400).json({
-      error: null,
-      message: 'Login service OK.',
-    });
-  })
   .post('/login', async (req, res) => {
     const { body } = req;
     console.log('POST /users/login');
