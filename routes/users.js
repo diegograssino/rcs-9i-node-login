@@ -9,9 +9,9 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
 router
-  .post('/login', async (req, res) => {
+  .post('/login', async (req, res, next) => {
     const { body } = req;
-    console.log('POST /users/login');
+    console.log('POST on /users/login');
 
     // Al no tener validaciones, simplemente chequea que el body no venga vacío, y sí es así retorna un msj de error.
     if (!body.name || !body.password) {
@@ -73,7 +73,7 @@ router
       });
     }
   })
-  .post('/register', async (req, res) => {
+  .post('/register', async (req, res, next) => {
     console.log('POST /users/register');
     const { body } = req;
     // Chequeo si el body no llega vacío para directamente devolver
@@ -118,7 +118,7 @@ router
       res.status(400).json({ error: true, message: error });
     }
   })
-  .put('/update', tokenValidation, async (req, res) => {
+  .put('/update', tokenValidation, async (req, res, next) => {
     const { body } = req;
     console.log('PUT/users/update' + body.name);
 
@@ -153,7 +153,7 @@ router
       });
     }
   })
-  .delete('/delete', tokenValidation, async (req, res) => {
+  .delete('/delete', tokenValidation, async (req, res, next) => {
     const { body } = req;
     const token = req.header('auth-token');
     const decodedToken = jwt.decode(token, { complete: true });

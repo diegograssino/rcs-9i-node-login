@@ -1,4 +1,4 @@
-const whitelist = 'http://www.google.com';
+const whitelist = 'http://localhost:3000';
 
 const corsOptions = {
   origin: whitelist,
