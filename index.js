@@ -3,14 +3,16 @@ const app = express();
 const cors = require('cors');
 require('dotenv').config();
 require('./config/database').connect();
-const corsOptions = require('./config/cors');
+const timeStamp = require('./utils/timestamp');
+
 const PORT = process.env.PORT || 8000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cors());
 
-app.get('/', cors(corsOptions), (req, res, next) => {
-  console.log('GET on /');
+app.get('/', (req, res, next) => {
+  timeStamp('GET on /');
   return res.status(200).json({
     error: null,
     message: 'Service UP & RUNNING!',
@@ -18,8 +20,8 @@ app.get('/', cors(corsOptions), (req, res, next) => {
 });
 
 const usersRoutes = require('./routes/users');
-app.use('/users', cors(corsOptions), usersRoutes);
+app.use('/users', usersRoutes);
 
 app.listen(PORT, () => {
-  console.log('Server running on port ' + PORT);
+  timeStamp('Server running on port ' + PORT);
 });

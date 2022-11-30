@@ -1,19 +1,16 @@
-// Configuro el router y el schema correspondiente.
 const router = require('express').Router();
 const User = require('../models/user.js');
-// Traigo el middleware que chequea el JWT
 const tokenValidation = require('./tokenValidation');
-// Configuro JWT
 const jwt = require('jsonwebtoken');
-// Configuro bcrypt
 const bcrypt = require('bcryptjs');
+const timeStamp = require('../utils/timestamp');
 
 router
   .post('/login', async (req, res, next) => {
     const { body } = req;
-    console.log('POST on /users/login');
+    timeStamp('POST on /users/login');
 
-    // Al no tener validaciones, simplemente chequea que el body no venga vacío, y sí es así retorna un msj de error.
+    // TODO: Add validations
     if (!body.name || !body.password) {
       return res.status(400).json({
         error: true,
@@ -35,7 +32,6 @@ router
     const passwordOk = await bcrypt.compare(body.password, user.password);
 
     if (user && passwordOk) {
-      // Creando token
       const token = jwt.sign(
         {
           name: user.name,
@@ -45,7 +41,6 @@ router
         process.env.TOKEN_SECRET
       );
 
-      // Guardando el token en la bbdd
       const userToAddToken = await User.findOneAndUpdate(
         { name: body.name },
         {
@@ -74,9 +69,9 @@ router
     }
   })
   .post('/register', async (req, res, next) => {
-    console.log('POST /users/register');
+    timeStamp('POST /users/register');
     const { body } = req;
-    // Chequeo si el body no llega vacío para directamente devolver
+
     if (!body.name || !body.password || !body.mail) {
       return res.status(400).json({
         error: true,
@@ -84,7 +79,6 @@ router
       });
     }
 
-    // Chequeo doble de previa existencia del usuario, en la API y en el Schema con unique
     const newUserNameExist = await User.findOne({
       name: body.name,
     });
@@ -98,7 +92,6 @@ router
       });
     }
 
-    // Aplico bcrypt
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(body.password, salt);
 
@@ -120,7 +113,7 @@ router
   })
   .put('/update', tokenValidation, async (req, res, next) => {
     const { body } = req;
-    console.log('PUT/users/update' + body.name);
+    timeStamp('PUT/users/update' + body.name);
 
     const token = req.header('auth-token');
     const decodedToken = jwt.decode(token, { complete: true });
@@ -157,9 +150,8 @@ router
     const { body } = req;
     const token = req.header('auth-token');
     const decodedToken = jwt.decode(token, { complete: true });
-    console.log('DELETE/users/' + body.name);
+    timeStamp('DELETE/users/' + body.name);
 
-    // chequeo previamente si el user es el super usuario para no borrarlo nunca
     const SUPER_USER = process.env.SUPER_USER || 'admin';
 
     if (body.name === SUPER_USER || !decodedToken.payload.role === 'admin') {

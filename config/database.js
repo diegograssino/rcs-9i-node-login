@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const timeStamp = require('../utils/timestamp');
 
 exports.connect = () => {
   mongoose
@@ -6,6 +7,6 @@ exports.connect = () => {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     })
-    .then(() => console.log('Database connection OK'))
+    .then(() => timeStamp('Database connection OK'))
     .catch(error => console.error(error));
 };
