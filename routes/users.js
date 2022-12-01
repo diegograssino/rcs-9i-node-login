@@ -18,10 +18,15 @@ router
       });
     }
 
-    const user = await User.findOne({
-      name: body.name,
-    });
-    console.log(user);
+    try {
+      const user = await User.findOne({
+        name: body.name,
+      });
+      console.log('BBDD connection.');
+      console.log(user);
+    } catch (error) {
+      console.log(error);
+    }
 
     if (!user) {
       return res.status(400).json({
