@@ -7,22 +7,22 @@ const userSchema = new Schema({
   name: {
     type: String,
     required: true,
-    min: 6,
-    max: 12,
+    min: 4,
+    max: 36,
     unique: true,
   },
   mail: {
     type: String,
     required: true,
-    min: 6,
+    min: 3,
     max: 128,
     unique: true,
   },
   password: {
     type: String,
     required: true,
-    min: 6,
-    max: 12,
+    min: 4,
+    max: 8,
   },
   role: {
     type: String,
@@ -31,10 +31,6 @@ const userSchema = new Schema({
   date: {
     type: Date,
     default: Date.now,
-  },
-  tokens: {
-    type: String,
-    default: '',
   },
 });
 
